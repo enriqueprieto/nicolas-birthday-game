@@ -1,0 +1,15 @@
+{
+  "name": "nicolas-birthday-game",
+  "version": "1.0.0",
+  "main": "script.js",
+  "scripts": {
+    "dev": "http-server -p 8080"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
