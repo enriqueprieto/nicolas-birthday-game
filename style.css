@@ -6,8 +6,12 @@ body {
     align-items: center;
     justify-content: center;
     height: 100vh;
+    box-sizing: border-box;
     background-color: #f0f0f0;
     font-family: sans-serif;
+}
+* {
+    box-sizing: border-box;
 }
 
 h1 {
@@ -15,9 +19,12 @@ h1 {
 }
 
 canvas {
+    z-index: 1;
+    position: fixed;
+    top: 0;
+    left: 0;
     background-color: #333;
     display: none; /* Só aparece após iniciar */
-    border: 3px solid black;
 }
 
 button {

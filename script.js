@@ -31,7 +31,7 @@ function drawBackground() {
 
     // Linhas da pista
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 3;
     for (let i = 0; i < canvas.height; i += 40) {
         ctx.beginPath();
         ctx.moveTo(canvas.width / 2, i + roadSpeed * 5);
@@ -41,8 +41,8 @@ function drawBackground() {
 
     // Lateral com árvores
     ctx.fillStyle = 'green';
-    ctx.fillRect(0, 0, 100, canvas.height); // Esquerda
-    ctx.fillRect(300, 0, 100, canvas.height); // Direita
+    ctx.fillRect(0, 0, 50, canvas.height); // Esquerda
+    ctx.fillRect(325, 0, 50, canvas.height); // Direita
 
     // Desenhar árvores
     ctx.fillStyle = '#654321';
@@ -155,13 +155,126 @@ function resetGame() {
     document.getElementById('startBtn').style.display = 'block'; // Mostrar o botão de novo
 }
 
+const elementsMap = {
+    startButton: 'startBtn',
+    canvas: 'gameCanvas'
+};
+
+class App {
+    constructor() {
+        this.device = {
+            width: window.innerWidth,
+            height: window.innerHeight
+        };
+
+        this.canvas = document.getElementById(elementsMap.canvas);
+        this.startButton = document.getElementById(elementsMap.startButton);
+
+        this.gameStarted = false;
+        this.roadSpeed = 5;
+
+        this.setupCanvas();
+        this.setupContext();
+        this.setupCar();
+        this.addListeners();
+    }
+
+    setupCar(){
+        const car = {
+            x: this.canvas.width / 2 - 50,
+            y: this.canvas.height - 120,
+            width: 80,
+            height: 161,
+            speed: 10,
+            img: new Image(),
+            turbo: false,
+            turboSpeed: 15
+        };
+        car.img.src = './car.png'; 
+
+        this.car = car;
+    }
+    setupCanvas(){
+        if (!this.canvas) return;
+
+        this.canvas.width = this.device.width;
+        this.canvas.height = this.device.height;
+    }
+    setupContext() {
+        if (!this.canvas) return;
+
+        this.ctx = this.canvas.getContext('2d');
+    }
+
+    addListeners() {
+        this.startButton.addEventListener('click', this.onStartButtonClick.bind(this));
+    }
+
+    onStartButtonClick() {
+        this.startButton.style.display = 'none';
+        this.canvas.style.display = 'block';
+        
+        this.gameStarted = true;
+
+        this.updateGame();
+    }
+
+    updateGame() {
+        if (!this.gameStarted) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.drawBackground();
+        this.drawCar();
+    }
+
+    drawBackground() {
+
+        //Driveway
+        this.ctx.fillStyle = '#808080';
+        const offset = this.canvas.width * 0.1;
+        const drivewayWidth = this.canvas.width * 0.8;
+        this.ctx.fillRect(offset, 0, drivewayWidth, this.canvas.height);
+    
+        // Linhas da pista
+        this.ctx.strokeStyle = '#FFFFFF';
+        this.ctx.lineWidth = 3;
+        for (let i = 0; i < this.canvas.height; i += 40) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.canvas.width / 2, i + this.roadSpeed * 5);
+            this.ctx.lineTo(this.canvas.width / 2, i + 20 + this.roadSpeed * 5);
+            this.ctx.stroke();
+        }
+    
+        // Lateral com árvores
+        this.ctx.fillStyle = 'green';
+        this.ctx.fillRect(0, 0, offset, this.canvas.height); // Esquerda
+        this.ctx.fillRect(offset+drivewayWidth, 0, offset, this.canvas.height); // Direita
+    
+        // Desenhar árvores
+        this.ctx.fillStyle = '#654321';
+        for (let i = 0; i < this.canvas.height; i += 150) {
+            this.ctx.fillRect(0, i + this.roadSpeed * 5, 20, 50); // Árvore esquerda
+            this.ctx.fillRect(offset+drivewayWidth, i + this.roadSpeed * 5, 20, 50); // Árvore direita
+        }
+    }
+
+    drawCar() {
+        this.ctx.drawImage(this.car.img, this.car.x, this.car.y, this.car.width, this.car.height);
+    
+        // Efeito de turbo
+        if (this.car.turbo) {
+            this.ctx.fillStyle = 'orange';
+            this.ctx.fillRect(this.car.x + this.car.width / 2 - 10, this.car.y + this.car.height, 20, 40);
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const app = new App();
+})
+
 // Iniciar o jogo
-document.getElementById('startBtn').addEventListener('click', function() {
-    this.style.display = 'none'; // Esconder o botão
-    canvas.style.display = 'block';
-    gameStarted = true;
-    updateGame();
-});
 
 // Movimento do carro com setas
 document.addEventListener('keydown', function(event) {
