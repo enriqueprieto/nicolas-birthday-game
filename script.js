@@ -1,22 +1,22 @@
 // Seleciona o canvas
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-
-canvas.width = 400;
-canvas.height = 600;
-
 let gameStarted = false;
+let lineOffset = 0; // Variável para controlar o deslocamento das faixas
+let treeOffset = 0; // Variável para controlar o deslocamento das árvores
 let car = {
-    x: canvas.width / 2 - 50,
-    y: canvas.height - 120,
-    width: 100,
-    height: 100,
+    x: canvas.width / 2 - 65 / 2, // Centraliza o carro
+    y: canvas.height - 180,
+    width: 65, // nova largura
+    height: Math.round(65 * (161 / 80)), // altura proporcional
     speed: 10,
     img: new Image(),
     turbo: false,
-    turboSpeed: 15
+    turboSpeed: 10,
+    turboEffectImg: new Image() 
 };
 car.img.src = './car.png'; // Carro Mitsubishi amarelo
+car.turboEffectImg.src = './rocket-fire.webp';
 
 let roadSpeed = 5;
 let frames = 0;
@@ -24,31 +24,69 @@ let obstacles = [];
 let score = 0;
 let highScore = localStorage.getItem('highScore') || 0;
 
+// Configurações do canvas para responsividade
+function resizeCanvas() {
+    const sideLaneWidth = 75; // Largura fixa dos canteiros laterais
+    const maxWidth = 400;
+    const scaleFactor = Math.min(window.innerWidth / maxWidth, 1);
+    
+    canvas.width = maxWidth * scaleFactor;
+    canvas.height = window.innerHeight;
+
+    // Recalcular a posição e tamanho do carro
+    car.width = 65; // nova largura
+    car.height = Math.round(car.width * (161 / 80)); 
+    car.x = canvas.width / 2 - car.width / 2;
+    car.y = canvas.height - car.height - 20; // Posicionar o carro próximo ao fundo
+}
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+const treeImage = new Image();
+treeImage.src = './tree.png';
+treeImage.onload = function() {
+    console.log('Imagme pronta para desenhar');
+}
+// Desenhar a pista
+// Desenhar as linhas divisórias da pista com o deslocamento
 // Desenhar a pista
 function drawBackground() {
+    const sideLaneWidth = 75; // Largura dos canteiros laterais
+    const roadWidth = canvas.width - sideLaneWidth * 2; // A pista ocupa o restante
+
+    // Desenhar os canteiros verdes
+    ctx.fillStyle = 'green';
+    ctx.fillRect(0, 0, sideLaneWidth, canvas.height); // Esquerda
+    ctx.fillRect(canvas.width - sideLaneWidth, 0, sideLaneWidth, canvas.height); // Direita
+
+    // Desenhar a pista
     ctx.fillStyle = '#808080';
-    ctx.fillRect(100, 0, 200, canvas.height);
+    ctx.fillRect(sideLaneWidth, 0, roadWidth, canvas.height);
 
     // Linhas da pista
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 5;
+
+    // Movimentar as faixas brancas
     for (let i = 0; i < canvas.height; i += 40) {
+        const dashPos = (i + frames * roadSpeed) % canvas.height; // Posição das faixas ajustada
         ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, i + roadSpeed * 5);
-        ctx.lineTo(canvas.width / 2, i + 20 + roadSpeed * 5);
+        ctx.moveTo(canvas.width / 2, dashPos);
+        ctx.lineTo(canvas.width / 2, dashPos + 20);
         ctx.stroke();
     }
 
-    // Lateral com árvores
-    ctx.fillStyle = 'green';
-    ctx.fillRect(0, 0, 100, canvas.height); // Esquerda
-    ctx.fillRect(300, 0, 100, canvas.height); // Direita
-
-    // Desenhar árvores
-    ctx.fillStyle = '#654321';
+    // Desenhar árvores como imagens
+    const treeWidth = 50; // Largura fixa da árvore
     for (let i = 0; i < canvas.height; i += 150) {
-        ctx.fillRect(40, i + roadSpeed * 5, 20, 50); // Árvore esquerda
-        ctx.fillRect(340, i + roadSpeed * 5, 20, 50); // Árvore direita
+        const treeHeight = 50; // Alterna entre 50px e 100px
+        const treePos = (i + frames * roadSpeed) % canvas.height; // Posição ajustada das árvores
+
+        // Árvore esquerda
+        ctx.drawImage(treeImage, sideLaneWidth / 2 - treeWidth / 2, treePos, treeWidth, treeHeight);
+
+        // Árvore direita
+        ctx.drawImage(treeImage, canvas.width - sideLaneWidth / 2 - treeWidth / 2, treePos, treeWidth, treeHeight);
     }
 }
 
@@ -58,24 +96,35 @@ function drawCar() {
 
     // Efeito de turbo
     if (car.turbo) {
-        ctx.fillStyle = 'orange';
-        ctx.fillRect(car.x + car.width / 2 - 10, car.y + car.height, 20, 40);
+        ctx.drawImage(car.turboEffectImg, car.x, car.y + car.height, car.width, 40); // Ajuste a altura conforme necessário
     }
 }
 
 // Função para criar obstáculos
+// Função para criar obstáculos de diferentes tamanhos
 function createObstacle() {
+    const obstacleTypes = [
+        { width: 30 * (canvas.width / 400), height: 60 * (canvas.width / 400), color: 'yellow', points: 1 }, // Pequeno
+        { width: 40 * (canvas.width / 400), height: 80 * (canvas.width / 400), color: 'orange', points: 2 }, // Médio
+        { width: 50 * (canvas.width / 400), height: 100 * (canvas.width / 400), color: 'red', points: 3 }    // Grande (atual)
+    ];
+    
+    // Escolher um tipo de obstáculo aleatoriamente
+    const obstacleType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+    
     let obstacle = {
-        x: Math.random() * 200 + 100,
+        x: Math.random() * (canvas.width * 0.5) + canvas.width * 0.25,
         y: -100,
-        width: 50,
-        height: 100,
-        color: 'red'
+        width: obstacleType.width,
+        height: obstacleType.height,
+        color: obstacleType.color,
+        points: obstacleType.points // Pontuação associada ao tipo de obstáculo
     };
+    
     obstacles.push(obstacle);
 }
 
-// Desenhar obstáculos
+// Desenhar obstáculos com diferentes tipos
 function drawObstacles() {
     obstacles.forEach((obstacle, index) => {
         ctx.fillStyle = obstacle.color;
@@ -85,10 +134,10 @@ function drawObstacles() {
         // Remover obstáculos que saem da tela
         if (obstacle.y > canvas.height) {
             obstacles.splice(index, 1);
-            score++;
+            score += obstacle.points; // Aumenta a pontuação de acordo com o tipo de obstáculo
         }
 
-        // Colisão
+        // Colisão com o carro
         if (
             car.x < obstacle.x + obstacle.width &&
             car.x + car.width > obstacle.x &&
@@ -98,6 +147,54 @@ function drawObstacles() {
             gameOver();
         }
     });
+}
+let turboPill = null; // Variável para armazenar a pílula de turbo
+let turboActiveTime = 0; // Controla o tempo de turbo
+
+// Função para criar a pílula de turbo
+function createTurboPill() {
+    turboPill = {
+        x: Math.random() * (canvas.width * 0.5) + canvas.width * 0.25,
+        y: -50,
+        width: 50,
+        height: 50,
+        color: 'blue'
+    };
+}
+
+// Desenhar a pílula de turbo
+function drawTurboPill() {
+    if (turboPill) {
+        ctx.fillStyle = turboPill.color;
+        ctx.fillRect(turboPill.x, turboPill.y, turboPill.width, turboPill.height);
+        turboPill.y += roadSpeed;
+
+        // Remover a pílula se sair da tela
+        if (turboPill.y > canvas.height) {
+            turboPill = null;
+        }
+
+        // Colisão com o carro (ativa o turbo)
+        if (
+            turboPill &&
+            car.x < turboPill.x + turboPill.width &&
+            car.x + car.width > turboPill.x &&
+            car.y < turboPill.y + turboPill.height &&
+            car.y + car.height > turboPill.y
+        ) {
+            car.turbo = true;
+            turboActiveTime = frames; // Marca o tempo de ativação do turbo
+            turboPill = null; // Remove a pílula após a coleta
+        }
+    }
+}
+
+// Atualizar o status do turbo
+function updateTurbo() {
+    if (car.turbo && frames - turboActiveTime > 300) { // Turbo dura 10 segundos (600 frames)
+        car.turbo = false;
+        roadSpeed = 5; // Retorna à velocidade normal
+    }
 }
 
 // Atualizar o jogo
@@ -109,6 +206,8 @@ function updateGame() {
     drawBackground();
     drawCar();
     drawObstacles();
+    drawTurboPill();
+    updateTurbo(); // Atualizar status do turbo
 
     frames += 1;
     roadSpeed += 0.005; // Aumentar a velocidade da pista gradualmente
@@ -117,9 +216,13 @@ function updateGame() {
         createObstacle(); // Criar um obstáculo a cada 2 segundos
     }
 
+    if (frames % 300 === 0 && !turboPill) {
+        createTurboPill(); // Criar uma pílula de turbo a cada 5 segundos
+    }
+
     // Atualizar pontuação
     document.getElementById('score').textContent = `Pontuação: ${score}`;
-    
+
     // Super velocidade
     if (car.turbo) {
         roadSpeed = car.turboSpeed;
@@ -151,6 +254,7 @@ function resetGame() {
     frames = 0;
     roadSpeed = 5;
     car.x = canvas.width / 2 - car.width / 2;
+    car.turbo = false;
     gameStarted = false;
     document.getElementById('startBtn').style.display = 'block'; // Mostrar o botão de novo
 }
@@ -165,9 +269,9 @@ document.getElementById('startBtn').addEventListener('click', function() {
 
 // Movimento do carro com setas
 document.addEventListener('keydown', function(event) {
-    if (event.key === 'ArrowLeft' && car.x > 100) {
+    if (event.key === 'ArrowLeft' && car.x > canvas.width * 0.25) {
         car.x -= car.speed;
-    } else if (event.key === 'ArrowRight' && car.x < canvas.width - car.width - 100) {
+    } else if (event.key === 'ArrowRight' && car.x < canvas.width * 0.75 - car.width) {
         car.x += car.speed;
     } else if (event.key === ' ') {
         car.turbo = true;
@@ -188,9 +292,9 @@ canvas.addEventListener('touchstart', function(event) {
 
 canvas.addEventListener('touchmove', function(event) {
     let touchX = event.touches[0].clientX;
-    if (touchX < startX && car.x > 100) {
+    if (touchX < startX && car.x > canvas.width * 0.25) {
         car.x -= car.speed;
-    } else if (touchX > startX && car.x < canvas.width - car.width - 100) {
+    } else if (touchX > startX && car.x < canvas.width * 0.75 - car.width) {
         car.x += car.speed;
     }
 });
