@@ -41,8 +41,9 @@ function drawBackground() {
 
     // Lateral com árvores
     ctx.fillStyle = 'green';
-    ctx.fillRect(0, 0, 50, canvas.height); // Esquerda
-    ctx.fillRect(325, 0, 50, canvas.height); // Direita
+    const asideSize = 50;
+    ctx.fillRect(0, 0, asideSize, canvas.height); // Esquerda
+    ctx.fillRect(100, 0, asideSize, canvas.height); // Direita
 
     // Desenhar árvores
     ctx.fillStyle = '#654321';
@@ -155,23 +156,37 @@ function resetGame() {
     document.getElementById('startBtn').style.display = 'block'; // Mostrar o botão de novo
 }
 
+const uiConfig = {
+    asideSize: 50
+};
+
 const elementsMap = {
+    appScreen: '.app-screen',
+    initialPage: '.app__initial',
+    gamePage: '.app__game',
+    endPage: '.app__end',
     startButton: 'startBtn',
     canvas: 'gameCanvas'
 };
 
 class App {
     constructor() {
+        this.screen = document.querySelector(elementsMap.appScreen);
+        const rect = this.screen.getBoundingClientRect();
         this.device = {
-            width: window.innerWidth,
-            height: window.innerHeight
+            width: rect.width,
+            height: rect.height
         };
-
+        this.uiConfig = uiConfig;
         this.canvas = document.getElementById(elementsMap.canvas);
         this.startButton = document.getElementById(elementsMap.startButton);
+        this.initialPage = document.querySelector(elementsMap.initialPage);
+        this.gamePage = document.querySelector(elementsMap.gamePage);
+        this.endPage = document.querySelector(elementsMap.endPage);
 
         this.gameStarted = false;
         this.roadSpeed = 5;
+        this.startX = 0;
 
         this.setupCanvas();
         this.setupContext();
@@ -182,7 +197,7 @@ class App {
     setupCar(){
         const car = {
             x: this.canvas.width / 2 - 50,
-            y: this.canvas.height - 120,
+            y: this.canvas.height - 161,
             width: 80,
             height: 161,
             speed: 10,
@@ -208,12 +223,49 @@ class App {
 
     addListeners() {
         this.startButton.addEventListener('click', this.onStartButtonClick.bind(this));
+        document.addEventListener('keydown', this.onDocumentKeyDown.bind(this));
+        document.addEventListener('keyup', this.onDocumentoKeyUp.bind(this));
+        this.canvas.addEventListener('touchstart', this.onCanvasTouchStart.bind(this));
+        this.canvas.addEventListener('touchmove', this.onCanvasTouchMove.bind(this));
+    }
+
+    onCanvasTouchStart(event) {
+        this.startX = event.touches[0].clientX;
+    }
+    onCanvasTouchMove(event) {
+        let touchX = event.touches[0].clientX;
+        if (touchX < startX && car.x > 100) {
+            this.car.x -= this.car.speed;
+        } else if (touchX > startX && car.x < this.canvas.width - this.car.width - 100) {
+            this.car.x += this.car.speed;
+        }
+    }
+
+    onDocumentoKeyUp(event) {
+        if (event.key === ' ') {
+            this.car.turbo = false;
+        }
+    }
+
+    onDocumentKeyDown(event) {
+        if (event.key === 'ArrowLeft' && this.car.x > 100) {
+            this.car.x -= this.car.speed;
+        } else if (event.key === 'ArrowRight' && this.car.x < this.canvas.width - this.car.width - 100) {
+            this.car.x += this.car.speed;
+        } else if (event.key === 'Enter') {
+            this.car.turbo = true;
+        }
     }
 
     onStartButtonClick() {
-        this.startButton.style.display = 'none';
-        this.canvas.style.display = 'block';
-        
+        if (
+            !this.initialPage ||
+            !this.gamePage
+        ) return;
+
+        this.initialPage.setAttribute('aria-hidden', 'true');
+        this.gamePage.setAttribute('aria-hidden', 'false');
+
         this.gameStarted = true;
 
         this.updateGame();
@@ -226,19 +278,20 @@ class App {
 
         this.drawBackground();
         this.drawCar();
+
+        requestAnimationFrame(this.updateGame.bind(this));
     }
 
     drawBackground() {
-
-        //Driveway
         this.ctx.fillStyle = '#808080';
         const offset = this.canvas.width * 0.1;
-        const drivewayWidth = this.canvas.width * 0.8;
-        this.ctx.fillRect(offset, 0, drivewayWidth, this.canvas.height);
+        const asideSizeTotal = this.uiConfig.asideSize * 2;
+        const drivewayWidth = this.canvas.width - asideSizeTotal;
+        this.ctx.fillRect(this.uiConfig.asideSize, 0, drivewayWidth, this.canvas.height);
     
         // Linhas da pista
         this.ctx.strokeStyle = '#FFFFFF';
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 5;
         for (let i = 0; i < this.canvas.height; i += 40) {
             this.ctx.beginPath();
             this.ctx.moveTo(this.canvas.width / 2, i + this.roadSpeed * 5);
@@ -248,14 +301,14 @@ class App {
     
         // Lateral com árvores
         this.ctx.fillStyle = 'green';
-        this.ctx.fillRect(0, 0, offset, this.canvas.height); // Esquerda
-        this.ctx.fillRect(offset+drivewayWidth, 0, offset, this.canvas.height); // Direita
+        this.ctx.fillRect(0, 0, this.uiConfig.asideSize, this.canvas.height); // Esquerda
+        this.ctx.fillRect(this.uiConfig.asideSize+drivewayWidth, 0, this.uiConfig.asideSize, this.canvas.height); // Direita
     
         // Desenhar árvores
         this.ctx.fillStyle = '#654321';
         for (let i = 0; i < this.canvas.height; i += 150) {
-            this.ctx.fillRect(0, i + this.roadSpeed * 5, 20, 50); // Árvore esquerda
-            this.ctx.fillRect(offset+drivewayWidth, i + this.roadSpeed * 5, 20, 50); // Árvore direita
+            this.ctx.fillRect(((this.uiConfig.asideSize/2) - 10), i + this.roadSpeed * 5, 20, 50); // Árvore esquerda 100 - 20 = 80
+            this.ctx.fillRect(((this.canvas.width - (this.uiConfig.asideSize/2)) - 10), i + this.roadSpeed * 5, 20, 50); // Árvore direita
         }
     }
 
@@ -274,24 +327,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const app = new App();
 })
 
-// Iniciar o jogo
-
-// Movimento do carro com setas
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'ArrowLeft' && car.x > 100) {
-        car.x -= car.speed;
-    } else if (event.key === 'ArrowRight' && car.x < canvas.width - car.width - 100) {
-        car.x += car.speed;
-    } else if (event.key === ' ') {
-        car.turbo = true;
-    }
-});
-
-document.addEventListener('keyup', function(event) {
-    if (event.key === ' ') {
-        car.turbo = false;
-    }
-});
 
 // Controle por gestos (mobile)
 let startX = 0;

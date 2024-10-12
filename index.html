@@ -7,10 +7,25 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Corrida Infinita</h1>
-    <button id="startBtn">Iniciar Jogo</button>
-    <canvas id="gameCanvas"></canvas>
-    <p id="score">Pontuação: 0</p>
+    <div class="app app-screen">
+        <main class="app__display app-screen">
+            <section class="app__initial app-page">
+                <header>
+                    <h1 class="app-title">Corrida Infinita</h1>
+                </header>
+                
+                <p id="score">Pontuação: 0</p>
+                
+                <button id="startBtn">Iniciar Jogo</button>
+            </section>
+
+            <section class="app__game app-page" aria-hidden="true">
+                <canvas id="gameCanvas"></canvas>
+            </section>
+
+            <section class="app__end app-page" aria-hidden="true"></section>
+        </div>
+    </div>
     
     <script src="script.js"></script>
 </body>
