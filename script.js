@@ -24,6 +24,19 @@ let obstacles = [];
 let score = 0;
 let highScore = localStorage.getItem('highScore') || 0;
 
+const obstacleImages = {
+    cone: new Image(),
+    bar: new Image(),
+    wheels: new Image()
+};
+obstacleImages.cone.src = './obstacule-cone.png';
+obstacleImages.bar.src = './obstacule-bar.png';
+obstacleImages.wheels.src = './obstacule-wheels.png';
+
+// Carregar imagem da pílula de turbo
+const turboPillImage = new Image();
+turboPillImage.src = './turbo-image.png';
+
 // Configurações do canvas para responsividade
 function resizeCanvas() {
     const sideLaneWidth = 75; // Largura fixa dos canteiros laterais
@@ -100,13 +113,11 @@ function drawCar() {
     }
 }
 
-// Função para criar obstáculos
-// Função para criar obstáculos de diferentes tamanhos
 function createObstacle() {
     const obstacleTypes = [
-        { width: 30 * (canvas.width / 400), height: 60 * (canvas.width / 400), color: 'yellow', points: 1 }, // Pequeno
-        { width: 40 * (canvas.width / 400), height: 80 * (canvas.width / 400), color: 'orange', points: 2 }, // Médio
-        { width: 50 * (canvas.width / 400), height: 100 * (canvas.width / 400), color: 'red', points: 3 }    // Grande (atual)
+        { img: obstacleImages.cone },
+        { img: obstacleImages.bar },
+        { img: obstacleImages.wheels }
     ];
     
     // Escolher um tipo de obstáculo aleatoriamente
@@ -115,20 +126,18 @@ function createObstacle() {
     let obstacle = {
         x: Math.random() * (canvas.width * 0.5) + canvas.width * 0.25,
         y: -100,
-        width: obstacleType.width,
-        height: obstacleType.height,
-        color: obstacleType.color,
-        points: obstacleType.points // Pontuação associada ao tipo de obstáculo
+        width: 50,
+        height: 50,
+        points: 2,
+        img: obstacleType.img
     };
     
     obstacles.push(obstacle);
 }
-
 // Desenhar obstáculos com diferentes tipos
 function drawObstacles() {
     obstacles.forEach((obstacle, index) => {
-        ctx.fillStyle = obstacle.color;
-        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        ctx.drawImage(obstacle.img, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
         obstacle.y += roadSpeed;
 
         // Remover obstáculos que saem da tela
@@ -151,22 +160,20 @@ function drawObstacles() {
 let turboPill = null; // Variável para armazenar a pílula de turbo
 let turboActiveTime = 0; // Controla o tempo de turbo
 
-// Função para criar a pílula de turbo
 function createTurboPill() {
     turboPill = {
         x: Math.random() * (canvas.width * 0.5) + canvas.width * 0.25,
         y: -50,
         width: 50,
         height: 50,
-        color: 'blue'
+        img: turboPillImage
     };
 }
 
 // Desenhar a pílula de turbo
 function drawTurboPill() {
     if (turboPill) {
-        ctx.fillStyle = turboPill.color;
-        ctx.fillRect(turboPill.x, turboPill.y, turboPill.width, turboPill.height);
+        ctx.drawImage(turboPill.img, turboPill.x, turboPill.y, turboPill.width, turboPill.height);
         turboPill.y += roadSpeed;
 
         // Remover a pílula se sair da tela
