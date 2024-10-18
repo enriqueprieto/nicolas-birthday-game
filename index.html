@@ -7,10 +7,29 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1 id="title">Corrida Infinita</h1>
-    <button id="startBtn">Iniciar Jogo</button>
-    <canvas id="gameCanvas"></canvas>
-    <p id="score">Pontuação: 0</p>
+    <div class="app">
+        <div class="app__game">
+            <div id="js-app-game-init" class="app__screen app__game__init">
+                <h1 id="title">Nicolas Prieto Nardo</h1>
+                <h2>Preparem-se pilotos!</h2>
+                <p>Foi dada a largada para a festa do meu aniversário.</p>
+                <ul>
+                    <li>Data: 25/10/2024</li>
+                    <li>Local: Colégio Anglo</li>
+                </ul>
+                <button id="startBtn">Iniciar Jogo</button>
+            </div>
+
+            <div id="js-app-game-play" class="app__screen app__game__play">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+
+            <div class="app__screen app__game__over">
+                <p id="score">Pontuação: 0</p>
+            </div>
+        </div>
+    </div>
+
     
     <script src="script.js"></script>
 </body>

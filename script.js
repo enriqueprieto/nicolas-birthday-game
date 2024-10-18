@@ -263,12 +263,27 @@ function resetGame() {
     car.x = canvas.width / 2 - car.width / 2;
     car.turbo = false;
     gameStarted = false;
-    document.getElementById('startBtn').style.display = 'block'; // Mostrar o botão de novo
+    const initScreen = document.querySelector('#js-app-game-init');
+    if (initScreen) {
+        initScreen.classList.add('is-active');
+    }
+    const playScreen = document.querySelector('#js-app-game-play');
+    if (playScreen) {
+        playScreen.classList.remove('is-active');
+    }
 }
 
 // Iniciar o jogo
 document.getElementById('startBtn').addEventListener('click', function() {
-    this.style.display = 'none'; // Esconder o botão
+    const initScreen = document.querySelector('#js-app-game-init');
+    if (initScreen) {
+        initScreen.classList.remove('is-active');
+    }
+    const playScreen = document.querySelector('#js-app-game-play');
+    if (playScreen) {
+        playScreen.classList.add('is-active');
+    }
+    
     canvas.style.display = 'block';
     gameStarted = true;
     updateGame();
@@ -303,5 +318,13 @@ canvas.addEventListener('touchmove', function(event) {
         car.x -= car.speed;
     } else if (touchX > startX && car.x < canvas.width * 0.75 - car.width) {
         car.x += car.speed;
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const initScreen = document.querySelector('#js-app-game-init');
+    if (initScreen) {
+        initScreen.classList.add('is-active');
     }
 });
